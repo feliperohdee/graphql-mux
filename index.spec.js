@@ -8,7 +8,7 @@ chai.use(sinonChai);
 
 const expect = chai.expect;
 
-const query1 = `query($user: String!) {
+const requestString = `query($user: String!) {
 	user (id: $user){
 		id
 		name
@@ -93,18 +93,6 @@ describe('index.js', () => {
 	});
 
 	describe('graphql', () => {
-		beforeEach(() => {
-			sinon.stub(queue, 'id')
-				.onFirstCall()
-				.returns('id1')
-				.onSecondCall()
-				.returns('id2');
-		});
-
-		afterEach(() => {
-			queue.id.restore();
-		});
-
 		it('should build query without definitions', done => {
 			queue.graphql({
 					requestString: `{
@@ -126,7 +114,7 @@ describe('index.js', () => {
 		describe('single query', () => {
 			it('should not replace tokens when no variables provided', done => {
 				queue.graphql({
-						requestString: query1,
+						requestString,
 						variableValues: {
 							user: undefined
 						}
@@ -142,16 +130,16 @@ describe('index.js', () => {
 
 			it('should replace tokens', done => {
 				queue.graphql({
-						requestString: query1,
+						requestString,
 						variableValues: {
 							user: 'user'
 						}
 					})
 					.then(() => {
 						expect(executor).to.have.been.calledWithExactly({
-							requestString: 'query($user_id1:String!) { user (id: $user_id1){ id name } userShipping (id: $user_id1){ id address { city street } }',
+							requestString: 'query($user_25087692:String!) { user (id: $user_25087692){ id name } userShipping (id: $user_25087692){ id address { city street } }',
 							variableValues: {
-								user_id1: 'user'
+								user_25087692: 'user'
 							}
 						});
 						done();
@@ -163,13 +151,13 @@ describe('index.js', () => {
 			it('should not replace tokens when no variables provided', done => {
 				Promise.all([
 						queue.graphql({
-							requestString: query1,
+							requestString,
 							variableValues: {
 								user: undefined
 							}
 						}),
 						queue.graphql({
-							requestString: query1,
+							requestString,
 							variableValues: {
 								user: undefined
 							}
@@ -184,16 +172,16 @@ describe('index.js', () => {
 					});
 			});
 
-			it('should replace tokens', done => {
+			it('should replace tokens with same variableValues', done => {
 				Promise.all([
 						queue.graphql({
-							requestString: query1,
+							requestString,
 							variableValues: {
 								user: 'user'
 							}
 						}),
 						queue.graphql({
-							requestString: query1,
+							requestString,
 							variableValues: {
 								user: 'user'
 							}
@@ -201,10 +189,36 @@ describe('index.js', () => {
 					])
 					.then(() => {
 						expect(executor).to.have.been.calledWithExactly({
-							requestString: 'query($user_id1:String!,$user_id2:String!) { user (id: $user_id1){ id name } userShipping (id: $user_id1){ id address { city street }  user (id: $user_id2){ id name } userShipping (id: $user_id2){ id address { city street } }',
+							requestString: 'query($user_25087692:String!) { user (id: $user_25087692){ id name } userShipping (id: $user_25087692){ id address { city street }  user (id: $user_25087692){ id name } userShipping (id: $user_25087692){ id address { city street } }',
 							variableValues: {
-								user_id1: 'user',
-								user_id2: 'user'
+								user_25087692: 'user'
+							}
+						});
+						done();
+					});
+			});
+
+			it('should replace tokens with different variableValues', done => {
+				Promise.all([
+						queue.graphql({
+							requestString,
+							variableValues: {
+								user: 'user'
+							}
+						}),
+						queue.graphql({
+							requestString,
+							variableValues: {
+								user: 'user1'
+							}
+						})
+					])
+					.then(() => {
+						expect(executor).to.have.been.calledWithExactly({
+							requestString: 'query($user_25087692:String!,$user_3963035677:String!) { user (id: $user_25087692){ id name } userShipping (id: $user_25087692){ id address { city street }  user (id: $user_3963035677){ id name } userShipping (id: $user_3963035677){ id address { city street } }',
+							variableValues: {
+								user_25087692: 'user',
+								user_3963035677: 'user1'
 							}
 						});
 						done();
