@@ -3,6 +3,7 @@ const isFunction = require('lodash/isFunction');
 const isUndefined = require('lodash/isUndefined');
 const reduce = require('lodash/reduce');
 const trim = require('lodash/trim');
+const values = require('lodash/values');
 
 const definitionsRegex = /\$\w+:\s*[^$,)]*/g;
 const extractInnerRegex = /\{.*\}/g;
@@ -40,7 +41,7 @@ module.exports = class GraphQLMux {
         this.resolvers = [];
         this.rejecters = [];
         this.definitions = {};
-        this.requestString = [];
+        this.requestString = {};
         this.variableValues = {};
     }
 
@@ -50,7 +51,7 @@ module.exports = class GraphQLMux {
     }) {
         clearTimeout(this.timeout);
 
-		const id = this.id(requestString, variableValues);
+        const id = this.id(requestString, variableValues);
         const definitions = reduce(requestString.match(definitionsRegex), (reduction, token) => {
             const [
                 key,
@@ -84,7 +85,7 @@ module.exports = class GraphQLMux {
             return reduction;
         }, this.definitions);
 
-        this.requestString = this.requestString.concat(requestString);
+        this.requestString[id] = requestString;
         this.timeout = setTimeout(() => {
             const resolvers = [].concat(this.resolvers);
             const rejecters = [].concat(this.rejecters);
@@ -94,7 +95,7 @@ module.exports = class GraphQLMux {
                 .join();
 
             this.executor({
-                    requestString: `${this.type}${definitions ? `(${definitions})` : ''} {${this.requestString.join('')}}`,
+                    requestString: `${this.type}${definitions ? `(${definitions})` : ''} {${values(this.requestString).join('')}}`,
                     variableValues: this.variableValues
                 })
                 .then(response => {

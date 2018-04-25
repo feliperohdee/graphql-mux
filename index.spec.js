@@ -87,7 +87,7 @@ describe('index.js', () => {
 			expect(queue.resolvers).to.deep.equal([]);
 			expect(queue.rejecters).to.deep.equal([]);
 			expect(queue.definitions).to.deep.equal({});
-			expect(queue.requestString).to.deep.equal([]);
+			expect(queue.requestString).to.deep.equal({});
 			expect(queue.variableValues).to.deep.equal({});
 		});
 	});
@@ -165,7 +165,7 @@ describe('index.js', () => {
 					])
 					.then(() => {
 						expect(executor).to.have.been.calledWithExactly({
-							requestString: 'query($user:String!) { user (id: $user){ id name } userShipping (id: $user){ id address { city street }  user (id: $user){ id name } userShipping (id: $user){ id address { city street } }',
+							requestString: 'query($user:String!) { user (id: $user){ id name } userShipping (id: $user){ id address { city street } }',
 							variableValues: {}
 						});
 						done();
@@ -189,7 +189,7 @@ describe('index.js', () => {
 					])
 					.then(() => {
 						expect(executor).to.have.been.calledWithExactly({
-							requestString: 'query($user_25087692:String!) { user (id: $user_25087692){ id name } userShipping (id: $user_25087692){ id address { city street }  user (id: $user_25087692){ id name } userShipping (id: $user_25087692){ id address { city street } }',
+							requestString: 'query($user_25087692:String!) { user (id: $user_25087692){ id name } userShipping (id: $user_25087692){ id address { city street } }',
 							variableValues: {
 								user_25087692: 'user'
 							}
