@@ -1,13 +1,17 @@
 const assign = require('lodash/assign');
+const filter = require('lodash/filter');
+const map = require('lodash/map');
 const isFunction = require('lodash/isFunction');
 const isUndefined = require('lodash/isUndefined');
 const reduce = require('lodash/reduce');
+const size = require('lodash/size');
 const trim = require('lodash/trim');
 const values = require('lodash/values');
 
 const definitionsRegex = /\$\w+:\s*[^$,)]*/g;
 const extractInnerRegex = /\{.*\}/g;
 const reduceStringRegex = /\s{2,}/g;
+const matchFields = /[({].*?}+/g;
 
 const hash = str => {
     let hash = 5381,
@@ -31,8 +35,8 @@ module.exports = class GraphQLMux {
         this.executor = executor;
         this.type = type;
         this.wait = wait;
-	}
-	
+    }
+
     id(requestString, variableValues = {}) {
         return hash(requestString + JSON.stringify(variableValues));
     }
@@ -85,7 +89,35 @@ module.exports = class GraphQLMux {
             return reduction;
         }, this.definitions);
 
-        this.requestString[id] = requestString;
+        let field = null;
+        let fields = [];
+
+        while ((field = matchFields.exec(requestString)) != null) {
+            const primaryField = /[0-9a-zA-Z:\s]*$/g.exec(requestString.slice(0, field.index));
+            const primary = trim(primaryField[0]);
+            const splitted = primary.split(':').map(trim);
+            const nativeAlias = splitted.length > 1;
+
+            fields.push({
+                primary: {
+                    nativeAlias,
+                    alias: nativeAlias ? splitted[0] : `${splitted[0]}_${id}`,
+                    value: splitted[nativeAlias ? 1 : 0]
+                },
+                rest: {
+                    value: trim(field[0])
+                }
+            });
+        }
+
+        this.requestString[id] = reduce(fields, (reduction, {
+            primary,
+            rest
+        }) => {
+            return reduction.concat(`${primary.alias}:${primary.value}${rest.value}`);
+        }, [])
+        .join(' ');
+
         this.timeout = setTimeout(() => {
             const resolvers = [].concat(this.resolvers);
             const rejecters = [].concat(this.rejecters);
@@ -113,7 +145,21 @@ module.exports = class GraphQLMux {
         }, this.wait);
 
         return new Promise((resolve, reject) => {
-            this.resolvers.push(resolve);
+            this.resolvers.push(response => {
+                response.data = response.data && reduce(fields, (reduction, {
+                    primary
+                }) => {
+                    const fieldResponse = response.data[primary.alias] || response.data[primary.value];
+
+                    if (fieldResponse) {
+                        reduction[primary.nativeAlias ? primary.alias : primary.value] = fieldResponse;
+                    }
+
+                    return reduction;
+                }, {});
+
+                resolve(response);
+            });
             this.rejecters.push(reject);
         });
     }

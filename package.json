@@ -1,6 +1,6 @@
 {
   "name": "smallorange-graphql-mux",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "GraphQL multiplex",
   "main": "index.js",
   "author": "Felipe Rohde",
