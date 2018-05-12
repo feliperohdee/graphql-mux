@@ -140,41 +140,71 @@ describe('index.js', () => {
                 });
         });
 		
-		it.only('should build query without fields', done => {
+		it('should build query without fields and definitions', done => {
             queue.graphql({
                     requestString: `{
 						user
 					}`
                 })
                 .then(response => {
-                    // expect(executor).to.have.been.calledWithExactly({
-                    //     requestString: 'query {user_1827029371:user}',
-                    //     variableValues: {}
-					// });
+                    expect(executor).to.have.been.calledWithExactly({
+                        requestString: 'query {user_1253080765:user}',
+                        variableValues: {}
+					});
 					
-					// expect(response.data).to.have.all.keys([
-					// 	'user'
-					// ]);
+					expect(response.data).to.have.all.keys([
+						'user'
+					]);
 
                     done();
                 });
         });
 		
-		it.only('should build query with definitions without fields', done => {
+		it('should build query without fields', done => {
             queue.graphql({
                     requestString: `{
 						user (id: $user)
-					}`
+					}`,
+					variableValues: {
+						user: 'user'
+					}
                 })
                 .then(response => {
-                    // expect(executor).to.have.been.calledWithExactly({
-                    //     requestString: 'query {user_1827029371:user}',
-                    //     variableValues: {}
-					// });
+                    expect(executor).to.have.been.calledWithExactly({
+                        requestString: 'query {user_2907055684:user(id: $user_2907055684)}',
+                        variableValues: {
+							user_2907055684: 'user'
+						}
+					});
 					
-					// expect(response.data).to.have.all.keys([
-					// 	'user'
-					// ]);
+					expect(response.data).to.have.all.keys([
+						'user'
+					]);
+
+                    done();
+                });
+        });
+		
+		it('should build query with custom alias', done => {
+            queue.graphql({
+                    requestString: `{
+						userOne: user (id: $user)
+					}`,
+					variableValues: {
+						user: 'user'
+					}
+                })
+                .then(response => {
+                    expect(executor).to.have.been.calledWithExactly({
+                        requestString: 'query {userOne:user(id: $user_4219907659)}',
+                        variableValues: {
+							user_4219907659: 'user'
+						}
+					});
+					
+					expect(response.data).to.have.all.keys([
+						'userOne'
+					]);
 
                     done();
                 });

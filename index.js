@@ -133,7 +133,10 @@ module.exports = class GraphQLMux {
         }, this.definitions);
 
         const brackets = iterateBrackets(requestString);
-        const fields = reduce(brackets || [{start: 1, end: 1}], (reduction, {
+        const fields = reduce(brackets || [{
+            start: 0,
+            end: 0
+        }], (reduction, {
             start,
             end
         }, index, source) => {
@@ -141,7 +144,7 @@ module.exports = class GraphQLMux {
                 end: 0
             };
             
-            const query = trim(requestString.slice(prev.end, end));
+            const query = trim(prev.end || end ? requestString.slice(prev.end, end) : requestString);
             const field = trim(replace(query, replaceAfterParenthesysOrBracker), [',', ' ']);
             const parenthesys = match(query, matchParenthesysContent);
             const splitted = field.split(':').map(trim);
@@ -158,8 +161,6 @@ module.exports = class GraphQLMux {
                 }
             });
         }, []);
-
-        console.log(fields);
 
         this.requestString[id] = reduce(fields, (reduction, {
                 primary,
@@ -197,19 +198,20 @@ module.exports = class GraphQLMux {
 
         return new Promise((resolve, reject) => {
             this.resolvers.push(response => {
-                response.data = response.data && reduce(fields, (reduction, {
-                    primary
-                }) => {
-                    const fieldResponse = response.data[primary.alias] || response.data[primary.value];
-
-                    if (fieldResponse) {
-                        reduction[primary.nativeAlias ? primary.alias : primary.value] = fieldResponse;
-                    }
-
-                    return reduction;
-                }, {});
-
-                resolve(response);
+                resolve({
+                    ...response,
+                    data: response.data && reduce(fields, (reduction, {
+                        primary
+                    }) => {
+                        const fieldResponse = response.data[primary.alias] || response.data[primary.value];
+    
+                        if (fieldResponse) {
+                            reduction[primary.nativeAlias ? primary.alias : primary.value] = fieldResponse;
+                        }
+    
+                        return reduction;
+                    }, {})
+                });
             });
             this.rejecters.push(reject);
         });
