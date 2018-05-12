@@ -32,10 +32,10 @@ const outerBrackets = (value, from = 0) => {
     if (start >= 0) {
         const end = matchBracket(value, start);
 
-        if (!end) {
+        if(!end) {
             return null;
         }
-
+        
         result = result.concat({
             start,
             end
@@ -198,20 +198,17 @@ module.exports = class GraphQLMux {
 
         return new Promise((resolve, reject) => {
             this.resolvers.push(response => {
-                resolve({
-                    ...response,
+                resolve(assign({}, response, {
                     data: response.data && reduce(fields, (reduction, {
                         primary
                     }) => {
                         const fieldResponse = response.data[primary.alias] || response.data[primary.value];
     
-                        if (fieldResponse) {
-                            reduction[primary.nativeAlias ? primary.alias : primary.value] = fieldResponse;
-                        }
+                        reduction[primary.nativeAlias ? primary.alias : primary.value] = fieldResponse;
     
                         return reduction;
                     }, {})
-                });
+                }));
             });
             this.rejecters.push(reject);
         });
