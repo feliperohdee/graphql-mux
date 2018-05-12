@@ -1,46 +1,21 @@
-class Tracker {
-    constructor(cursor) {
-        this.cursor = cursor;
-    }
-
-    advancePosition() {
-        this.cursor++;
-    }
-
-    moveCursor(unit) {
-        this.cursor += unit;
-    }
-}
-
-function trim(text, cursor) {
-    return text.substring(cursor);
-}
-
-module.exports = (code, cursor) => {
-    const BRACKET_PAIRS = {
-        '(': ')',
-        '{': '}',
-        '[': ']'
-    };
-
-    let tracker = new Tracker(cursor);
-    let trimmed = trim(code, cursor);
-    let bracket = trimmed[0];
-    let bracketStack = [];
+module.exports = (text, cursor, pair = '}') => {
+    let bracketIndex = 0;
+    const trimmed = text.slice(cursor);
+    const bracket = trimmed[0];
 
     for (let i = 0; i < trimmed.length; i++) {
-        let char = trimmed[i];
+        const char = trimmed[i];
 
-        if (char === BRACKET_PAIRS[bracket]) {
-            bracketStack.pop();
+        if (char === pair) {
+            bracketIndex--;
         } else if (char === bracket) {
-            bracketStack.push(char);
+            bracketIndex++;
         }
 
-        if (bracketStack.length === 0) {
-            return tracker.cursor + 1;
+        if (bracketIndex !== 0) {
+            cursor++;
         } else {
-            tracker.advancePosition();
+            return cursor + 1;
         }
     }
 
