@@ -1,17 +1,18 @@
 const assign = require('lodash/assign');
-const filter = require('lodash/filter');
-const map = require('lodash/map');
+const indexOf = require('lodash/indexOf');
 const isFunction = require('lodash/isFunction');
 const isUndefined = require('lodash/isUndefined');
 const reduce = require('lodash/reduce');
-const size = require('lodash/size');
 const trim = require('lodash/trim');
 const values = require('lodash/values');
 
-const definitionsRegex = /\$\w+:\s*[^$,)]*/g;
-const extractInnerRegex = /\{.*\}/g;
-const reduceStringRegex = /\s{2,}/g;
-const matchFields = /[({].*?}+/g;
+const matchBracket = require('./matcher');
+
+const matchDefinitions = /\$\w+:\s*[^$,)]*/g;
+const matchBracketsContent = /\{.*\}/g;
+const matchParenthesysContent = /\(.*\)/g;
+const replaceSimplifyString = /\s{2,}|\n|\r/g;
+const replaceAfterParenthesysOrBracker = /[{()].*/g;
 
 const hash = str => {
     let hash = 5381,
@@ -22,6 +23,48 @@ const hash = str => {
     }
 
     return hash >>> 0;
+};
+
+const iterateBrackets = (value, from = 0) => {
+    let result = [];
+    let start = indexOf(value, '{', from);
+
+    if (start >= 0) {
+        const end = matchBracket(value, start);
+
+        if (!end) {
+            return null;
+        }
+
+        result = result.concat({
+            start,
+            end
+        });
+
+        const next = iterateBrackets(value, end);
+
+        if (next) {
+            result = result.concat(next);
+        }
+
+        return result;
+    }
+
+    return null;
+};
+
+const match = (value, regex, all = false) => {
+    const result = value.match(regex);
+
+    if(all) {
+        return result;
+    }
+
+    return result && result[0];
+};
+
+const replace = (value, regex, replacer = '') => {
+    return value.replace(regex, replacer);
 };
 
 module.exports = class GraphQLMux {
@@ -56,7 +99,7 @@ module.exports = class GraphQLMux {
         clearTimeout(this.timeout);
 
         const id = this.id(requestString, variableValues);
-        const definitions = reduce(requestString.match(definitionsRegex), (reduction, token) => {
+        const definitions = reduce(match(requestString, matchDefinitions, true), (reduction, token) => {
             const [
                 key,
                 value
@@ -67,15 +110,15 @@ module.exports = class GraphQLMux {
             });
         }, {});
 
-        requestString = requestString.replace(reduceStringRegex, ' ');
-        requestString = requestString.match(extractInnerRegex)[0];
-        requestString = trim(requestString, /\{\}/g);
+        requestString = replace(requestString, replaceSimplifyString, ' ');
+        requestString = match(requestString, matchBracketsContent);
+        requestString = trim(requestString, ['{', '}']);
 
         this.variableValues = reduce(variableValues, (reduction, value, key) => {
             if (!isUndefined(value)) {
                 reduction[`${key}_${id}`] = value;
 
-                requestString = requestString.replace(new RegExp(`\\$${key}`, 'g'), `$${key}_${id}`);
+                requestString = replace(requestString, new RegExp(`\\$${key}`, 'g'), `$${key}_${id}`);
             }
 
             return reduction;
@@ -89,34 +132,42 @@ module.exports = class GraphQLMux {
             return reduction;
         }, this.definitions);
 
-        let field = null;
-        let fields = [];
-
-        while ((field = matchFields.exec(requestString)) != null) {
-            const primaryField = /[0-9a-zA-Z:\s]*$/g.exec(requestString.slice(0, field.index));
-            const primary = trim(primaryField[0]);
-            const splitted = primary.split(':').map(trim);
+        const brackets = iterateBrackets(requestString);
+        const fields = reduce(brackets || [{start: 1, end: 1}], (reduction, {
+            start,
+            end
+        }, index, source) => {
+            const prev = source[index - 1] || {
+                end: 0
+            };
+            
+            const query = trim(requestString.slice(prev.end, end));
+            const field = trim(replace(query, replaceAfterParenthesysOrBracker), [',', ' ']);
+            const parenthesys = match(query, matchParenthesysContent);
+            const splitted = field.split(':').map(trim);
             const nativeAlias = splitted.length > 1;
 
-            fields.push({
+            return reduction.concat({
                 primary: {
                     nativeAlias,
                     alias: nativeAlias ? splitted[0] : `${splitted[0]}_${id}`,
                     value: splitted[nativeAlias ? 1 : 0]
                 },
                 rest: {
-                    value: trim(field[0])
+                    value: `${parenthesys || ''}${requestString.slice(start, end)}`
                 }
             });
-        }
+        }, []);
+
+        console.log(fields);
 
         this.requestString[id] = reduce(fields, (reduction, {
-            primary,
-            rest
-        }) => {
-            return reduction.concat(`${primary.alias}:${primary.value}${rest.value}`);
-        }, [])
-        .join(' ');
+                primary,
+                rest
+            }) => {
+                return reduction.concat(`${primary.alias}:${primary.value}${rest.value}`);
+            }, [])
+            .join(' ');
 
         this.timeout = setTimeout(() => {
             const resolvers = [].concat(this.resolvers);
@@ -163,4 +214,4 @@ module.exports = class GraphQLMux {
             this.rejecters.push(reject);
         });
     }
-}
+};

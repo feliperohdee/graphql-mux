@@ -139,6 +139,46 @@ describe('index.js', () => {
                     done();
                 });
         });
+		
+		it.only('should build query without fields', done => {
+            queue.graphql({
+                    requestString: `{
+						user
+					}`
+                })
+                .then(response => {
+                    // expect(executor).to.have.been.calledWithExactly({
+                    //     requestString: 'query {user_1827029371:user}',
+                    //     variableValues: {}
+					// });
+					
+					// expect(response.data).to.have.all.keys([
+					// 	'user'
+					// ]);
+
+                    done();
+                });
+        });
+		
+		it.only('should build query with definitions without fields', done => {
+            queue.graphql({
+                    requestString: `{
+						user (id: $user)
+					}`
+                })
+                .then(response => {
+                    // expect(executor).to.have.been.calledWithExactly({
+                    //     requestString: 'query {user_1827029371:user}',
+                    //     variableValues: {}
+					// });
+					
+					// expect(response.data).to.have.all.keys([
+					// 	'user'
+					// ]);
+
+                    done();
+                });
+        });
 
         describe('single query', () => {
             it('should not replace tokens when no variables provided', done => {
@@ -150,7 +190,7 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street }}',
+                            requestString: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street } }}',
                             variableValues: {}
 						});
 						
@@ -172,7 +212,7 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_25087692:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street }}',
+                            requestString: 'query($user_25087692:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } }}',
                             variableValues: {
                                 user_25087692: 'user'
                             }
@@ -214,7 +254,7 @@ describe('index.js', () => {
 					})
 					.then(response => {
 						expect(executor).to.have.been.calledWithExactly({
-							requestString: 'query($user_3798055735:String!,$user2_3798055735:String!) {user_3798055735:user(id: $user_3798055735) { id name } userOne:user(id: $user_3798055735) { id name } userTwo:user(id: $user_37980557352) { id name } userThree:user(id: $user_37980557352) { id name }}',
+							requestString: 'query($user_3798055735:String!,$user2_3798055735:String!) {user_3798055735:user(id: $user_3798055735){ id name } userOne:user(id: $user_3798055735){ id name } userTwo:user(id: $user_37980557352){ id name } userThree:user(id: $user_37980557352){ id name }}',
 							variableValues: {
 								user_3798055735: 'user',
 								user2_3798055735: 'user2'
@@ -251,7 +291,7 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street }}',
+                            requestString: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street } }}',
                             variableValues: {}
 						});
 						
@@ -267,7 +307,7 @@ describe('index.js', () => {
 
                         done();
                     });
-            });
+			});
 
             it('should replace tokens with same variables', done => {
                 Promise.all([
@@ -286,7 +326,7 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_25087692:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street }}',
+                            requestString: 'query($user_25087692:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } }}',
                             variableValues: {
                                 user_25087692: 'user'
                             }
@@ -323,7 +363,7 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_25087692:String!,$user_3963035677:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street }user_3963035677:user(id: $user_3963035677){ id name } userShipping_3963035677:userShipping(id: $user_3963035677){ id address { city street }}',
+                            requestString: 'query($user_25087692:String!,$user_3963035677:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } }user_3963035677:user(id: $user_3963035677){ id name } userShipping_3963035677:userShipping(id: $user_3963035677){ id address { city street } }}',
                             variableValues: {
                                 user_25087692: 'user',
                                 user_3963035677: 'user1'
