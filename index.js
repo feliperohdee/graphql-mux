@@ -10,7 +10,7 @@ const matchBracket = require('./matcher');
 
 const matchDefinitions = /\$\w+:\s*[^$,)]*/g;
 const matchBracketsContent = /\{.*\}/g;
-const matchParenthesysContent = /\(.*\)/g;
+const matchFirstParenthesysContent = /\(.*?\)/g;
 const replaceSimplifyString = /\s{2,}|\n|\r/g;
 const replaceAfterParenthesysOrBracket = /[{()].*/g;
 
@@ -146,7 +146,7 @@ module.exports = class GraphQLMux {
             
             const query = trim(end ? requestString.slice(prev.end, end) : requestString);
             const field = trim(replace(query, replaceAfterParenthesysOrBracket), [',', ' ']);
-            const parenthesys = match(query, matchParenthesysContent);
+            const firstParenthesys = match(query, matchFirstParenthesysContent);
             const splitted = field.split(':').map(trim);
             const nativeAlias = splitted.length > 1;
 
@@ -157,7 +157,7 @@ module.exports = class GraphQLMux {
                     value: splitted[nativeAlias ? 1 : 0]
                 },
                 rest: {
-                    value: `${parenthesys || ''}${requestString.slice(start, end)}`
+                    value: `${firstParenthesys || ''}${requestString.slice(start, end)}`
                 }
             });
         }, []);

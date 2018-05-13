@@ -323,6 +323,66 @@ describe('index.js', () => {
                         done();
                     });
             });
+
+            it('should support complex queries', done => {
+                queue.graphql({
+                        requestString: `query ($namespace: String) {
+                            layout(namespace: $namespace) {
+                                description
+                                display {
+                                    type
+                                    props
+                                }
+                                enabled
+                                frame {
+                                    type
+                                    props
+                                }
+                                id
+                                type
+                                value {
+                                    ... on LayoutShowcaseWithDefaults {
+                                        categories {
+                                            operator
+                                            value
+                                        }
+                                        featured
+                                        ingredients {
+                                            operator
+                                            value
+                                        }
+                                        orderBy
+                                        limit
+                                        price
+                                        recent
+                                        special
+                                        showcaseItems: items(enabledOnly: true, namespace: $namespace) {
+                                            data {
+                                                id
+                                            }
+                                            stats {
+                                                count
+                                            }
+                                        }
+                                    }
+                                    ... on LayoutVisualWithDefaults {
+                                        visualItems: items
+                                    }
+                                }
+                                weekdays
+                            }
+                        }`,
+                        variableValues: {}
+                    })
+                    .then(response => {
+                        expect(executor).to.have.been.calledWithExactly({
+                            requestString: 'query($namespace:String) {layout_3248356992:layout(namespace: $namespace){ description display { type props } enabled frame { type props } id type value { ... on LayoutShowcaseWithDefaults { categories { operator value } featured ingredients { operator value } orderBy limit price recent special showcaseItems: items(enabledOnly: true, namespace: $namespace) { data { id } stats { count } } } ... on LayoutVisualWithDefaults { visualItems: items } } weekdays }}',
+                            variableValues: {}
+                        });
+
+                        done();
+                    });
+            });
         });
 
         describe('multiple queries', () => {
