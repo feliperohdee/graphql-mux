@@ -179,7 +179,7 @@ module.exports = class GraphQLMux {
                 .join();
 
             this.executor({
-                    requestString: `${this.type}${definitions ? `(${definitions})` : ''} {${values(this.requestString).join('')}}`,
+                    requestString: `${this.type}${definitions ? `(${definitions})` : ''} {${values(this.requestString).join(' ')}}`,
                     variableValues: this.variableValues
                 })
                 .then(response => {

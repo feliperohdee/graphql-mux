@@ -140,26 +140,6 @@ describe('index.js', () => {
                 });
         });
 
-        it('should build query without fields and definitions', done => {
-            queue.graphql({
-                    requestString: `{
-						user
-					}`
-                })
-                .then(response => {
-                    expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_1253080765:user}',
-                        variableValues: {}
-                    });
-
-                    expect(response.data).to.have.all.keys([
-                        'user'
-                    ]);
-
-                    done();
-                });
-        });
-
         it('should build query without fields', done => {
             queue.graphql({
                     requestString: `{
@@ -233,6 +213,26 @@ describe('index.js', () => {
         });
 
         describe('single query', () => {
+            it('should build query without fields and definitions', done => {
+                queue.graphql({
+                        requestString: `{
+                            user
+                        }`
+                    })
+                    .then(response => {
+                        expect(executor).to.have.been.calledWithExactly({
+                            requestString: 'query {user_644478388:user}',
+                            variableValues: {}
+                        });
+
+                        expect(response.data).to.have.all.keys([
+                            'user'
+                        ]);
+
+                        done();
+                    });
+            });
+
             it('should not replace tokens when no variables provided', done => {
                 queue.graphql({
                         requestString,
@@ -386,6 +386,33 @@ describe('index.js', () => {
         });
 
         describe('multiple queries', () => {
+            it('should build query without fields and definitions', done => {
+                Promise.all([
+                        queue.graphql({
+                            requestString: `{
+                                user
+                            }`
+                        }),
+                        queue.graphql({
+                            requestString: `{
+                                user2
+                            }`
+                        })
+                    ])
+                    .then(response => {
+                        expect(executor).to.have.been.calledWithExactly({
+                            requestString: 'query {user2_2620643398:user2 user_2883919540:user}',
+                            variableValues: {}
+                        });
+
+                        expect(response[0].data).to.have.all.keys([
+                            'user'
+                        ]);
+
+                        done();
+                    });
+            });
+
             it('should not replace tokens when no variables provided', done => {
                 Promise.all([
                         queue.graphql({
@@ -475,7 +502,7 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_25087692:String!,$user_3963035677:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } }user_3963035677:user(id: $user_3963035677){ id name } userShipping_3963035677:userShipping(id: $user_3963035677){ id address { city street } }}',
+                            requestString: 'query($user_25087692:String!,$user_3963035677:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } } user_3963035677:user(id: $user_3963035677){ id name } userShipping_3963035677:userShipping(id: $user_3963035677){ id address { city street } }}',
                             variableValues: {
                                 user_25087692: 'user',
                                 user_3963035677: 'user1'
