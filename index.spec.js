@@ -278,6 +278,32 @@ describe('index.js', () => {
                         done();
                     });
             });
+            
+            it('should replace tokens with similar variables', done => {
+                queue.graphql({
+                        requestString: `query($user: String!, $userAA: String!) {
+                            user (id: $user, userAA: $userAA){
+                                id
+                                name
+                            }
+                        }`,
+                        variableValues: {
+                            user: 'user',
+                            userAA: 'userAA',
+                        }
+                    })
+                    .then(response => {
+                        expect(executor).to.have.been.calledWithExactly({
+                            requestString: 'query($user_2597501096:String!,$userAA_2597501096:String!) {user_2597501096:user(id: $user_2597501096, userAA: $userAA_2597501096){ id name }}',
+                            variableValues: {
+                                user_2597501096: 'user',
+                                userAA_2597501096: 'userAA'
+                            }
+                        });
+
+                        done();
+                    });
+            });
 
             it('should support query with alias', done => {
                 queue.graphql({

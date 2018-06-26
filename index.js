@@ -118,7 +118,7 @@ module.exports = class GraphQLMux {
             if (!isUndefined(value)) {
                 reduction[`${key}_${id}`] = value;
 
-                requestString = replace(requestString, new RegExp(`\\$${key}`, 'g'), `$${key}_${id}`);
+                requestString = replace(requestString, new RegExp(`\\$${key}([^a-zA-Z_])`, 'g'), `$${key}_${id}$1`);
             }
 
             return reduction;
