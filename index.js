@@ -1,7 +1,7 @@
 const assign = require('lodash/assign');
 const indexOf = require('lodash/indexOf');
 const isFunction = require('lodash/isFunction');
-const isNil = require('lodash/isNil');
+const isUndefined = require('lodash/isUndefined');
 const map = require('lodash/map');
 const reduce = require('lodash/reduce');
 const trim = require('lodash/trim');
@@ -114,9 +114,6 @@ module.exports = class GraphQLMux {
         requestString = replace(requestString, replaceSimplifyString, ' ');
         requestString = match(requestString, matchBracketsContent);
         requestString = trim(requestString, ['{', '}']);
-
-        const baseRequestString = requestString;
-
         variableValues = map(variableValues, (value, key) => ({
                 key,
                 value
@@ -127,7 +124,7 @@ module.exports = class GraphQLMux {
             value, 
             key
         }, index) => {
-            if (!isNil(value) && baseRequestString.indexOf(`${key}`) >= 0) {
+            if (!isUndefined(value)) {
                 reduction[`_${key}_${id}`] = value;
 
                 requestString = replace(requestString, new RegExp(`\\$${key}`, 'g'), `$_${key}_${id}`);
@@ -138,7 +135,7 @@ module.exports = class GraphQLMux {
 
         this.definitions = reduce(definitions, (reduction, value, key) => {
             key = key.slice(1);           
-            const hasVariable = !isNil(this.variableValues[`_${key}_${id}`]);
+            const hasVariable = !isUndefined(this.variableValues[`_${key}_${id}`]);
 
             reduction[hasVariable ? `$_${key}_${id}` : `$${key}`] = value;
 
