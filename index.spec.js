@@ -151,9 +151,9 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_2907055684:user(id: $user_2907055684)}',
+                        requestString: 'query {user_2907055684:user(id: $_user_2907055684)}',
                         variableValues: {
-                            user_2907055684: 'user'
+                            _user_2907055684: 'user'
                         }
                     });
 
@@ -176,9 +176,9 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {userOne:user(id: $user_4219907659)}',
+                        requestString: 'query {userOne:user(id: $_user_4219907659)}',
                         variableValues: {
-                            user_4219907659: 'user'
+                            _user_4219907659: 'user'
                         }
                     });
 
@@ -202,9 +202,32 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_3206577074:user(id: $user_3206577074)}',
+                        requestString: 'query {user_3206577074:user(id: $_user_3206577074)}',
                         variableValues: {
-                            user_3206577074: 'user'
+                            _user_3206577074: 'user'
+                        }
+                    });
+
+                    done();
+                });
+        });
+        
+        it.skip('should not not include definition if variable not declared at query', done => {
+            queue.graphql({
+                    requestString: `{
+						user {
+                            name
+                        }
+					}`,
+                    variableValues: {
+                        user: 'user'
+                    }
+                })
+                .then(response => {
+                    expect(executor).to.have.been.calledWithExactly({
+                        requestString: 'query {user_2370743718:user{ name }}',
+                        variableValues: {
+                            _user_2370743718: 'user'
                         }
                     });
 
@@ -236,9 +259,7 @@ describe('index.js', () => {
             it('should not replace tokens when no variables provided', done => {
                 queue.graphql({
                         requestString,
-                        variableValues: {
-                            user: undefined
-                        }
+                        variableValues: {}
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
@@ -264,9 +285,9 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_25087692:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } }}',
+                            requestString: 'query($_user_25087692:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } }}',
                             variableValues: {
-                                user_25087692: 'user'
+                                _user_25087692: 'user'
                             }
                         });
 
@@ -294,10 +315,10 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_2597501096:String!,$userAA_2597501096:String!) {user_2597501096:user(id: $user_2597501096, userAA: $userAA_2597501096){ id name }}',
+                            requestString: 'query($_user_2597501096:String!,$_userAA_2597501096:String!) {user_2597501096:user(id: $_user_2597501096, userAA: $_userAA_2597501096){ id name }}',
                             variableValues: {
-                                user_2597501096: 'user',
-                                userAA_2597501096: 'userAA'
+                                _user_2597501096: 'user',
+                                _userAA_2597501096: 'userAA'
                             }
                         });
 
@@ -332,10 +353,10 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_3798055735:String!,$user2_3798055735:String!) {user_3798055735:user(id: $user_3798055735){ id name } userOne:user(id: $user_3798055735){ id name } userTwo:user(id: $user_37980557352){ id name } userThree:user(id: $user_37980557352){ id name }}',
+                            requestString: 'query($_user_3798055735:String!,$_user2_3798055735:String!) {user_3798055735:user(id: $_user_3798055735){ id name } userOne:user(id: $_user_3798055735){ id name } userTwo:user(id: $_user2_3798055735){ id name } userThree:user(id: $_user2_3798055735){ id name }}',
                             variableValues: {
-                                user_3798055735: 'user',
-                                user2_3798055735: 'user2'
+                                _user_3798055735: 'user',
+                                _user2_3798055735: 'user2'
                             }
                         });
 
@@ -491,9 +512,9 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_25087692:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } }}',
+                            requestString: 'query($_user_25087692:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } }}',
                             variableValues: {
-                                user_25087692: 'user'
+                                _user_25087692: 'user'
                             }
                         });
 
@@ -528,10 +549,10 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user_25087692:String!,$user_3963035677:String!) {user_25087692:user(id: $user_25087692){ id name } userShipping_25087692:userShipping(id: $user_25087692){ id address { city street } } user_3963035677:user(id: $user_3963035677){ id name } userShipping_3963035677:userShipping(id: $user_3963035677){ id address { city street } }}',
+                            requestString: 'query($_user_25087692:String!,$_user_3963035677:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } } user_3963035677:user(id: $_user_3963035677){ id name } userShipping_3963035677:userShipping(id: $_user_3963035677){ id address { city street } }}',
                             variableValues: {
-                                user_25087692: 'user',
-                                user_3963035677: 'user1'
+                                _user_25087692: 'user',
+                                _user_3963035677: 'user1'
                             }
                         });
 

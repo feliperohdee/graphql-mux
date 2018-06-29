@@ -1,7 +1,8 @@
 const assign = require('lodash/assign');
 const indexOf = require('lodash/indexOf');
 const isFunction = require('lodash/isFunction');
-const isUndefined = require('lodash/isUndefined');
+const isNil = require('lodash/isNil');
+const map = require('lodash/map');
 const reduce = require('lodash/reduce');
 const trim = require('lodash/trim');
 const values = require('lodash/values');
@@ -32,7 +33,7 @@ const outerBrackets = (value, from = 0) => {
     if (start >= 0) {
         const end = matchBracket(value, start);
 
-        if(!end) {
+        if (!end) {
             return null;
         }
         
@@ -56,7 +57,7 @@ const outerBrackets = (value, from = 0) => {
 const match = (value, regex, all = false) => {
     const result = value.match(regex);
 
-    if(all) {
+    if (all) {
         return result;
     }
 
@@ -114,20 +115,32 @@ module.exports = class GraphQLMux {
         requestString = match(requestString, matchBracketsContent);
         requestString = trim(requestString, ['{', '}']);
 
-        this.variableValues = reduce(variableValues, (reduction, value, key) => {
-            if (!isUndefined(value)) {
-                reduction[`${key}_${id}`] = value;
+        const baseRequestString = requestString;
 
-                requestString = replace(requestString, new RegExp(`\\$${key}([^a-zA-Z_])`, 'g'), `$${key}_${id}$1`);
+        variableValues = map(variableValues, (value, key) => ({
+                key,
+                value
+            }))
+            .sort((a, b) => a.key.length < b.key.length);
+
+        this.variableValues = reduce(variableValues, (reduction, {
+            value, 
+            key
+        }, index) => {
+            if (!isNil(value) && baseRequestString.indexOf(`${key}`) >= 0) {
+                reduction[`_${key}_${id}`] = value;
+
+                requestString = replace(requestString, new RegExp(`\\$${key}`, 'g'), `$_${key}_${id}`);
             }
 
             return reduction;
         }, this.variableValues);
 
         this.definitions = reduce(definitions, (reduction, value, key) => {
-            const hasVariable = !isUndefined(this.variableValues[`${key.slice(1)}_${id}`]);
+            key = key.slice(1);           
+            const hasVariable = !isNil(this.variableValues[`_${key}_${id}`]);
 
-            reduction[hasVariable ? `${key}_${id}` : key] = value;
+            reduction[hasVariable ? `$_${key}_${id}` : `$${key}`] = value;
 
             return reduction;
         }, this.definitions);
