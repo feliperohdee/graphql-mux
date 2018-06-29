@@ -214,7 +214,7 @@ describe('index.js', () => {
         
         it('should not not include definition if variable not declared at query', done => {
             queue.graphql({
-                    requestString: `query($user String){
+                    requestString: `query($user: String!){
 						user {
                             name
                         }
@@ -225,9 +225,9 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_2172904205:user{ name }}',
+                        requestString: 'query {user_2585484886:user{ name }}',
                         variableValues: {
-                            _user_2172904205: 'user'
+                            _user_2585484886: 'user'
                         }
                     });
 

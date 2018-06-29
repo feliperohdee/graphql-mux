@@ -136,8 +136,11 @@ module.exports = class GraphQLMux {
         this.definitions = reduce(definitions, (reduction, value, key) => {
             key = key.slice(1);           
             const hasVariable = !isUndefined(this.variableValues[`_${key}_${id}`]);
+            const existsOnQuery = requestString.indexOf(hasVariable ? `$_${key}_${id}` : `$${key}`) >= 0;
 
-            reduction[hasVariable ? `$_${key}_${id}` : `$${key}`] = value;
+            if(existsOnQuery) {
+                reduction[hasVariable ? `$_${key}_${id}` : `$${key}`] = value;
+            }
 
             return reduction;
         }, this.definitions);
