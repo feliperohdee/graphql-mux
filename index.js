@@ -13,7 +13,8 @@ const matchDefinitions = /\$\w+:\s*[^$,)]*/g;
 const matchBracketsContent = /\{.*\}/g;
 const matchFirstParenthesysContent = /\(.*?\)/g;
 const replaceSimplifyString = /\s{2,}|\n|\r/g;
-const replaceAfterParenthesysOrBracket = /[{()].*/g;
+const replaceAfterParenthesysOrBracket = /[{(].*/g;
+const replaceAfterBracket = /\{.*/g;
 
 const hash = str => {
     let hash = 5381,
@@ -54,14 +55,14 @@ const outerBrackets = (value, from = 0) => {
     return null;
 };
 
-const match = (value, regex, all = false) => {
+const match = (value, regex, index = 0) => {
     const result = value.match(regex);
 
-    if (all) {
+    if (index === 'ALL') {
         return result;
     }
 
-    return result && result[0];
+    return result && result[index] || null;
 };
 
 const replace = (value, regex, replacer = '') => {
@@ -100,7 +101,7 @@ module.exports = class GraphQLMux {
         clearTimeout(this.timeout);
 
         const id = this.id(requestString, variableValues);
-        const definitions = reduce(match(requestString, matchDefinitions, true), (reduction, token) => {
+        const definitions = reduce(match(requestString, matchDefinitions, 'ALL'), (reduction, token) => {
             const [
                 key,
                 value
@@ -159,7 +160,7 @@ module.exports = class GraphQLMux {
             
             const query = trim(end ? requestString.slice(prev.end, end) : requestString);
             const field = trim(replace(query, replaceAfterParenthesysOrBracket), [',', ' ']);
-            const firstParenthesys = match(query, matchFirstParenthesysContent);
+            const firstParenthesys = match(query.replace(replaceAfterBracket, ''), matchFirstParenthesysContent);
             const splitted = field.split(':').map(trim);
             const nativeAlias = splitted.length > 1;
 

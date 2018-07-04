@@ -234,6 +234,25 @@ describe('index.js', () => {
                     done();
                 });
         });
+        
+        it('should handle inner variable declarations', done => {
+            queue.graphql({
+                    requestString: `{
+						user {
+                            name(full: true)
+                        }
+					}`,
+                    variableValues: {}
+                })
+                .then(response => {
+                    expect(executor).to.have.been.calledWithExactly({
+                        requestString: 'query {user_633591138:user{ name(full: true) }}',
+                        variableValues: {}
+                    });
+
+                    done();
+                });
+        });
 
         describe('single query', () => {
             it('should build query without fields and definitions', done => {
