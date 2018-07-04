@@ -62,7 +62,7 @@ const match = (value, regex, index = 0) => {
         return result;
     }
 
-    return result && result[index] || null;
+    return (result && result[index]) || null;
 };
 
 const replace = (value, regex, replacer = '') => {
