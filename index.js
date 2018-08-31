@@ -82,26 +82,26 @@ module.exports = class GraphQLMux {
         this.wait = wait;
     }
 
-    id(requestString, variableValues = {}) {
-        return hash(requestString + JSON.stringify(variableValues));
+    id(source, variableValues = {}) {
+        return hash(source + JSON.stringify(variableValues));
     }
 
     setup() {
         this.resolvers = [];
         this.rejecters = [];
         this.definitions = {};
-        this.requestString = {};
+        this.source = {};
         this.variableValues = {};
     }
 
     graphql({
-        requestString = '',
+        source = '',
         variableValues = {}
     }) {
         clearTimeout(this.timeout);
 
-        const id = this.id(requestString, variableValues);
-        const definitions = reduce(match(requestString, matchDefinitions, 'ALL'), (reduction, token) => {
+        const id = this.id(source, variableValues);
+        const definitions = reduce(match(source, matchDefinitions, 'ALL'), (reduction, token) => {
             const [
                 key,
                 value
@@ -112,9 +112,9 @@ module.exports = class GraphQLMux {
             });
         }, {});
 
-        requestString = replace(requestString, replaceSimplifyString, ' ');
-        requestString = match(requestString, matchBracketsContent);
-        requestString = trim(requestString, ['{', '}']);
+        source = replace(source, replaceSimplifyString, ' ');
+        source = match(source, matchBracketsContent);
+        source = trim(source, ['{', '}']);
         variableValues = map(variableValues, (value, key) => ({
                 key,
                 value
@@ -128,7 +128,7 @@ module.exports = class GraphQLMux {
             if (!isUndefined(value)) {
                 reduction[`_${key}_${id}`] = value;
 
-                requestString = replace(requestString, new RegExp(`\\$${key}`, 'g'), `$_${key}_${id}`);
+                source = replace(source, new RegExp(`\\$${key}`, 'g'), `$_${key}_${id}`);
             }
 
             return reduction;
@@ -137,7 +137,7 @@ module.exports = class GraphQLMux {
         this.definitions = reduce(definitions, (reduction, value, key) => {
             key = key.slice(1);           
             const hasVariable = !isUndefined(this.variableValues[`_${key}_${id}`]);
-            const existsOnQuery = requestString.indexOf(hasVariable ? `$_${key}_${id}` : `$${key}`) >= 0;
+            const existsOnQuery = source.indexOf(hasVariable ? `$_${key}_${id}` : `$${key}`) >= 0;
 
             if(existsOnQuery) {
                 reduction[hasVariable ? `$_${key}_${id}` : `$${key}`] = value;
@@ -146,19 +146,19 @@ module.exports = class GraphQLMux {
             return reduction;
         }, this.definitions);
 
-        const brackets = outerBrackets(requestString);
+        const brackets = outerBrackets(source);
         const fields = reduce(brackets || [{
             start: 0,
             end: 0
         }], (reduction, {
             start,
             end
-        }, index, source) => {
-            const prev = source[index - 1] || {
+        }, index, pos) => {
+            const prev = pos[index - 1] || {
                 end: 0
             };
             
-            const query = trim(end ? requestString.slice(prev.end, end) : requestString);
+            const query = trim(end ? source.slice(prev.end, end) : source);
             const field = trim(replace(query, replaceAfterParenthesysOrBracket), [',', ' ']);
             const firstParenthesys = match(query.replace(replaceAfterBracket, ''), matchFirstParenthesysContent);
             const splitted = field.split(':').map(trim);
@@ -171,12 +171,12 @@ module.exports = class GraphQLMux {
                     value: splitted[nativeAlias ? 1 : 0]
                 },
                 rest: {
-                    value: `${firstParenthesys || ''}${requestString.slice(start, end)}`
+                    value: `${firstParenthesys || ''}${source.slice(start, end)}`
                 }
             });
         }, []);
 
-        this.requestString[id] = reduce(fields, (reduction, {
+        this.source[id] = reduce(fields, (reduction, {
                 primary,
                 rest
             }) => {
@@ -193,7 +193,7 @@ module.exports = class GraphQLMux {
                 .join();
 
             this.executor({
-                    requestString: `${this.type}${definitions ? `(${definitions})` : ''} {${values(this.requestString).join(' ')}}`,
+                    source: `${this.type}${definitions ? `(${definitions})` : ''} {${values(this.source).join(' ')}}`,
                     variableValues: this.variableValues
                 })
                 .then(response => {

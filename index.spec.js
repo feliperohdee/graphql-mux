@@ -8,7 +8,7 @@ chai.use(sinonChai);
 
 const expect = chai.expect;
 
-const requestString = `query($user: String!) {
+const source = `query($user: String!) {
 	user (id: $user){
 		id
 		name
@@ -103,7 +103,7 @@ describe('index.js', () => {
             queue.resolvers = null;
             queue.rejecters = null;
             queue.definitions = null;
-            queue.requestString = null;
+            queue.source = null;
             queue.variableValues = null;
 
             queue.setup();
@@ -111,7 +111,7 @@ describe('index.js', () => {
             expect(queue.resolvers).to.deep.equal([]);
             expect(queue.rejecters).to.deep.equal([]);
             expect(queue.definitions).to.deep.equal({});
-            expect(queue.requestString).to.deep.equal({});
+            expect(queue.source).to.deep.equal({});
             expect(queue.variableValues).to.deep.equal({});
         });
     });
@@ -119,7 +119,7 @@ describe('index.js', () => {
     describe('graphql', () => {
         it('should build query without definitions', done => {
             queue.graphql({
-                    requestString: `{
+                    source: `{
 						user {
 							id
 							name
@@ -128,7 +128,7 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_1827029371:user{ id name }}',
+                        source: 'query {user_1827029371:user{ id name }}',
                         variableValues: {}
                     });
 
@@ -142,7 +142,7 @@ describe('index.js', () => {
 
         it('should build query without fields', done => {
             queue.graphql({
-                    requestString: `{
+                    source: `{
 						user (id: $user)
 					}`,
                     variableValues: {
@@ -151,7 +151,7 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_2907055684:user(id: $_user_2907055684)}',
+                        source: 'query {user_2907055684:user(id: $_user_2907055684)}',
                         variableValues: {
                             _user_2907055684: 'user'
                         }
@@ -167,7 +167,7 @@ describe('index.js', () => {
 
         it('should build query with custom alias', done => {
             queue.graphql({
-                    requestString: `{
+                    source: `{
 						userOne: user (id: $user)
 					}`,
                     variableValues: {
@@ -176,7 +176,7 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {userOne:user(id: $_user_4219907659)}',
+                        source: 'query {userOne:user(id: $_user_4219907659)}',
                         variableValues: {
                             _user_4219907659: 'user'
                         }
@@ -192,7 +192,7 @@ describe('index.js', () => {
 
         it('should build invalid query', done => {
             queue.graphql({
-                    requestString: `{
+                    source: `{
 						user (id: $user) {
                             name
 					}`,
@@ -202,7 +202,7 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_3206577074:user(id: $_user_3206577074)}',
+                        source: 'query {user_3206577074:user(id: $_user_3206577074)}',
                         variableValues: {
                             _user_3206577074: 'user'
                         }
@@ -214,7 +214,7 @@ describe('index.js', () => {
         
         it('should not not include definition if variable not declared at query', done => {
             queue.graphql({
-                    requestString: `query($user: String!){
+                    source: `query($user: String!){
 						user {
                             name
                         }
@@ -225,7 +225,7 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_2585484886:user{ name }}',
+                        source: 'query {user_2585484886:user{ name }}',
                         variableValues: {
                             _user_2585484886: 'user'
                         }
@@ -237,7 +237,7 @@ describe('index.js', () => {
         
         it('should handle inner variable declarations', done => {
             queue.graphql({
-                    requestString: `{
+                    source: `{
 						user {
                             name(full: true)
                         }
@@ -246,7 +246,7 @@ describe('index.js', () => {
                 })
                 .then(response => {
                     expect(executor).to.have.been.calledWithExactly({
-                        requestString: 'query {user_633591138:user{ name(full: true) }}',
+                        source: 'query {user_633591138:user{ name(full: true) }}',
                         variableValues: {}
                     });
 
@@ -257,13 +257,13 @@ describe('index.js', () => {
         describe('single query', () => {
             it('should build query without fields and definitions', done => {
                 queue.graphql({
-                        requestString: `{
+                        source: `{
                             user
                         }`
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query {user_644478388:user}',
+                            source: 'query {user_644478388:user}',
                             variableValues: {}
                         });
 
@@ -277,12 +277,12 @@ describe('index.js', () => {
 
             it('should not replace tokens when no variables provided', done => {
                 queue.graphql({
-                        requestString,
+                        source,
                         variableValues: {}
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street } }}',
+                            source: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street } }}',
                             variableValues: {}
                         });
 
@@ -297,14 +297,14 @@ describe('index.js', () => {
 
             it('should replace tokens', done => {
                 queue.graphql({
-                        requestString,
+                        source,
                         variableValues: {
                             user: 'user'
                         }
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($_user_25087692:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } }}',
+                            source: 'query($_user_25087692:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } }}',
                             variableValues: {
                                 _user_25087692: 'user'
                             }
@@ -321,7 +321,7 @@ describe('index.js', () => {
             
             it('should replace tokens with similar variables', done => {
                 queue.graphql({
-                        requestString: `query($user: String!, $userAA: String!) {
+                        source: `query($user: String!, $userAA: String!) {
                             user (id: $user, userAA: $userAA){
                                 id
                                 name
@@ -334,7 +334,7 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($_user_2597501096:String!,$_userAA_2597501096:String!) {user_2597501096:user(id: $_user_2597501096, userAA: $_userAA_2597501096){ id name }}',
+                            source: 'query($_user_2597501096:String!,$_userAA_2597501096:String!) {user_2597501096:user(id: $_user_2597501096, userAA: $_userAA_2597501096){ id name }}',
                             variableValues: {
                                 _user_2597501096: 'user',
                                 _userAA_2597501096: 'userAA'
@@ -347,7 +347,7 @@ describe('index.js', () => {
 
             it('should support query with alias', done => {
                 queue.graphql({
-                        requestString: `query($user: String! $user2: String!) {
+                        source: `query($user: String! $user2: String!) {
 						 	user(id: $user) {
 								id
 								name
@@ -372,7 +372,7 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($_user_3798055735:String!,$_user2_3798055735:String!) {user_3798055735:user(id: $_user_3798055735){ id name } userOne:user(id: $_user_3798055735){ id name } userTwo:user(id: $_user2_3798055735){ id name } userThree:user(id: $_user2_3798055735){ id name }}',
+                            source: 'query($_user_3798055735:String!,$_user2_3798055735:String!) {user_3798055735:user(id: $_user_3798055735){ id name } userOne:user(id: $_user_3798055735){ id name } userTwo:user(id: $_user2_3798055735){ id name } userThree:user(id: $_user2_3798055735){ id name }}',
                             variableValues: {
                                 _user_3798055735: 'user',
                                 _user2_3798055735: 'user2'
@@ -392,7 +392,7 @@ describe('index.js', () => {
 
             it('should support complex queries', done => {
                 queue.graphql({
-                        requestString: `query ($namespace: String) {
+                        source: `query ($namespace: String) {
                             layout(namespace: $namespace) {
                                 description
                                 display {
@@ -442,7 +442,7 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($namespace:String) {layout_3248356992:layout(namespace: $namespace){ description display { type props } enabled frame { type props } id type value { ... on LayoutShowcaseWithDefaults { categories { operator value } featured ingredients { operator value } orderBy limit price recent special showcaseItems: items(enabledOnly: true, namespace: $namespace) { data { id } stats { count } } } ... on LayoutVisualWithDefaults { visualItems: items } } weekdays }}',
+                            source: 'query($namespace:String) {layout_3248356992:layout(namespace: $namespace){ description display { type props } enabled frame { type props } id type value { ... on LayoutShowcaseWithDefaults { categories { operator value } featured ingredients { operator value } orderBy limit price recent special showcaseItems: items(enabledOnly: true, namespace: $namespace) { data { id } stats { count } } } ... on LayoutVisualWithDefaults { visualItems: items } } weekdays }}',
                             variableValues: {}
                         });
 
@@ -455,19 +455,19 @@ describe('index.js', () => {
             it('should build query without fields and definitions', done => {
                 Promise.all([
                         queue.graphql({
-                            requestString: `{
+                            source: `{
                                 user
                             }`
                         }),
                         queue.graphql({
-                            requestString: `{
+                            source: `{
                                 user2
                             }`
                         })
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query {user2_2620643398:user2 user_2883919540:user}',
+                            source: 'query {user2_2620643398:user2 user_2883919540:user}',
                             variableValues: {}
                         });
 
@@ -482,13 +482,13 @@ describe('index.js', () => {
             it('should not replace tokens when no variables provided', done => {
                 Promise.all([
                         queue.graphql({
-                            requestString,
+                            source,
                             variableValues: {
                                 user: undefined
                             }
                         }),
                         queue.graphql({
-                            requestString,
+                            source,
                             variableValues: {
                                 user: undefined
                             }
@@ -496,7 +496,7 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street } }}',
+                            source: 'query($user:String!) {user_2067854358:user(id: $user){ id name } userShipping_2067854358:userShipping(id: $user){ id address { city street } }}',
                             variableValues: {}
                         });
 
@@ -517,13 +517,13 @@ describe('index.js', () => {
             it('should replace tokens with same variables', done => {
                 Promise.all([
                         queue.graphql({
-                            requestString,
+                            source,
                             variableValues: {
                                 user: 'user'
                             }
                         }),
                         queue.graphql({
-                            requestString,
+                            source,
                             variableValues: {
                                 user: 'user'
                             }
@@ -531,7 +531,7 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($_user_25087692:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } }}',
+                            source: 'query($_user_25087692:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } }}',
                             variableValues: {
                                 _user_25087692: 'user'
                             }
@@ -554,13 +554,13 @@ describe('index.js', () => {
             it('should replace tokens with different variableValues', done => {
                 Promise.all([
                         queue.graphql({
-                            requestString,
+                            source,
                             variableValues: {
                                 user: 'user'
                             }
                         }),
                         queue.graphql({
-                            requestString,
+                            source,
                             variableValues: {
                                 user: 'user1'
                             }
@@ -568,7 +568,7 @@ describe('index.js', () => {
                     ])
                     .then(response => {
                         expect(executor).to.have.been.calledWithExactly({
-                            requestString: 'query($_user_25087692:String!,$_user_3963035677:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } } user_3963035677:user(id: $_user_3963035677){ id name } userShipping_3963035677:userShipping(id: $_user_3963035677){ id address { city street } }}',
+                            source: 'query($_user_25087692:String!,$_user_3963035677:String!) {user_25087692:user(id: $_user_25087692){ id name } userShipping_25087692:userShipping(id: $_user_25087692){ id address { city street } } user_3963035677:user(id: $_user_3963035677){ id name } userShipping_3963035677:userShipping(id: $_user_3963035677){ id address { city street } }}',
                             variableValues: {
                                 _user_25087692: 'user',
                                 _user_3963035677: 'user1'
@@ -599,7 +599,7 @@ describe('index.js', () => {
 
             it('should reject', done => {
                 queue.graphql({
-                        requestString,
+                        source,
                         variableValues: {
                             user: 'user'
                         }

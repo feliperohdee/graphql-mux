@@ -14,7 +14,7 @@
 		const queue = new GraphQLMux(http, 'query', 10);
 		
 		queue.graphql({
-			requestString: `query($user: String!) {
+			source: `query($user: String!) {
 				user(id: $user) {
 					name
 				}
@@ -26,7 +26,7 @@
 		.then(...);
 		
 		queue.graphql({
-			requestString: `query(order: String!) {
+			source: `query(order: String!) {
 				order(id: $order) {
 					date
 					total
